@@ -524,6 +524,79 @@ void til::type_checker::do_call_node(til::call_node *const node, int lvl) {
   node->type(ftype->output(0));
 }
 
+void til::type_checker::do_with_node(til::with_node *const node, int lvl) {
+  ASSERT_UNSPEC;
+  cdk::expression_node *function = node->function();
+  std::shared_ptr<cdk::functional_type> function_type;
+
+  if (function != nullptr) {
+    function->accept(this, lvl);
+    if (!function->is_typed(cdk::TYPE_FUNCTIONAL))
+      throw std::string("call of non-function");
+
+    function_type = cdk::functional_type::cast(function->type());
+  } else {
+    // call of current function
+    auto symbol = _symtab.find("@", 1);
+    if (symbol == nullptr)
+      throw std::string("recursive invocation outside a function");
+
+    function_type = cdk::functional_type::cast(symbol->type());
+  }
+
+  // check high/low
+  node->low()->accept(this, lvl);
+  node->high()->accept(this, lvl);
+
+  if (!node->low()->is_typed(cdk::TYPE_INTEGER))
+    throw std::string("low is not an integer");
+
+  if (!node->high()->is_typed(cdk::TYPE_INTEGER))
+    throw std::string("high is not an integer");
+
+  int low = node->low()->value();
+  int high = node->high()->value();
+
+  if (low < 0)
+    throw std::string("low outside bounds");
+
+  if (high >= node->vec()->size())
+    throw std::string("high outside bounds");
+
+  if (low > high)
+    throw std::string("low greater than high");
+
+  if (node->vec()->size() != 1)
+    throw std::string("wrong number of arguments");
+
+  auto farg = ftype->input(0);
+  for (size_t i = 0; i < node->vec()->size(); i++) {
+    auto narg = dynamic_cast<cdk::expression_node *>(node->args()->node(i));
+
+    narg->accept(this, lvl);
+
+    if (narg->is_typed(cdk::TYPE_UNSPEC)) {
+      narg->type(ftype->name() == cdk::TYPE_DOUBLE
+                     ? cdk::primitive_type::create(8, cdk::TYPE_DOUBLE)
+                     : cdk::primitive_type::create(4, cdk::TYPE_INT));
+    }
+
+    if (narg->is_typed(cdk::TYPE_POINTER) && farg->name() == cdk::TYPE_POINTER) {
+      auto narg_ref_type = cdk::reference_type::cast(narg->type())->referenced()->name();
+      auto farg_ref_type = cdk::reference_type::cast(farg)->referenced()->name();
+
+      if (farg_ref_type == cdk::TYPE_VOID || narg_ref_type == cdk::TYPE_UNSPEC ||
+          narg_ref_type == cdk::TYPE_VOID)
+        narg->type(farg);
+    }
+
+    if (!equal_types(farg, narg->type()))
+      throw std::string("bad arg type in function call");
+  }
+
+  node->type(ftype->output(0));
+}
+
 //---------------------------------------------------------------------------
 
 void til::type_checker::do_return_node(til::return_node *const node, int lvl) {

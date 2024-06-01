@@ -651,6 +651,54 @@ void til::postfix_writer::do_call_node(til::call_node *const node, int lvl) {
   }
 }
 
+void til::postfix_writer::do_with_node(til::with_node *const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
+  std::shared_ptr<cdk::functional_type> type;
+  if (node->function() == nullptr) {  // Recursive call
+    auto symbol = _symtab.find("@", 1);
+    type = cdk::functional_type::cast(symbol->type());
+  } else {  // Normal call
+    type = cdk::functional_type::cast(node->function()->type());
+  }
+
+  node->low()->accept(this, lvl + 2);
+  node->high()->accept(this, lvl + 2);
+
+  int low = node->low()->value();
+  int high = node->high()->value();
+
+  for (size_t i = low; i < high; i++) {
+    auto argument = dynamic_cast<cdk::expression_node *>(node->args()->node(i));
+    int trash_size = argument->type()->size(); // Need to delete args from stack after call
+    fixFunctionTypes(argument, type->input(0), lvl + 2); // Pushing to stack and fixing types
+
+    _externalCall = "";
+
+    if (node->function() == nullptr) // Recursive call
+        _pf.ADDR(_functionLabels.back());
+    else // Normal call
+        node->function()->accept(this, lvl);
+
+    if (_externalCall != "")
+        _pf.CALL(_externalCall);
+    else
+        _pf.BRANCH();
+
+    _externalCall = "";
+
+    _pf.TRASH(trash_size);
+
+    // Only load if return is not void
+    if (!node->is_typed(cdk::TYPE_VOID)) {
+        if (node->is_typed(cdk::TYPE_DOUBLE))
+            _pf.LDFVAL64();
+        else
+            _pf.LDFVAL32();
+    }
+  }
+}
+
+
 //---------------------------------------------------------------------------
 
 void til::postfix_writer::do_return_node(til::return_node *const node, int lvl) {

@@ -43,7 +43,7 @@
 %token tPROGRAM tBLOCK tFUNCTION
 %token tPUBLIC tPRIVATE tFORWARD tEXTERNAL tVAR
 %token tPRINT tPRINTLN tSTOP tNEXT tRETURN
-%token tIF tLOOP
+%token tIF tLOOP tWITH
 %token tSET tREAD tSIZEOF tINDEX tOBJECTS
 %token tGE tLE tEQ tNE tAND tOR
 
@@ -174,32 +174,34 @@ expr : tINT                  { $$ = new cdk::integer_node(LINE, $1); }
      | '(' expr_comp ')'     { $$ = $2; }
      ;
 
-expr_comp : '-' expr              { $$ = new cdk::unary_minus_node(LINE, $2); }
-          | '+' expr              { $$ = new cdk::unary_plus_node(LINE, $2); }
-          | '?' lval              { $$ = new til::address_node(LINE, $2); }
-          | '*' expr expr         { $$ = new cdk::mul_node(LINE, $2, $3); }
-          | '/' expr expr         { $$ = new cdk::div_node(LINE, $2, $3); }
-          | '%' expr expr         { $$ = new cdk::mod_node(LINE, $2, $3); }
-          | '+' expr expr         { $$ = new cdk::add_node(LINE, $2, $3); }
-          | '-' expr expr         { $$ = new cdk::sub_node(LINE, $2, $3); }
-          | '<' expr expr         { $$ = new cdk::lt_node(LINE, $2, $3); }
-          | '>' expr expr         { $$ = new cdk::gt_node(LINE, $2, $3); }
-          | tGE expr expr         { $$ = new cdk::ge_node(LINE, $2, $3); }
-          | tLE expr expr         { $$ = new cdk::le_node(LINE, $2, $3); }
-          | tEQ expr expr         { $$ = new cdk::eq_node(LINE, $2, $3); }
-          | tNE expr expr         { $$ = new cdk::ne_node(LINE, $2, $3); }
-          | '~' expr              { $$ = new cdk::not_node(LINE, $2); }
-          | tAND expr expr        { $$ = new cdk::and_node(LINE, $2, $3); }
-          | tOR expr expr         { $$ = new cdk::or_node(LINE, $2, $3); }
-          | tSET lval expr        { $$ = new cdk::assignment_node(LINE, $2, $3); }
-          | expr exprs            { $$ = new til::call_node(LINE, $1, $2); }
-          | expr                  { $$ = new til::call_node(LINE, $1, new cdk::sequence_node(LINE)); }
-          | '@' exprs             { $$ = new til::call_node(LINE, nullptr, $2); }
-          | '@'                   { $$ = new til::call_node(LINE, nullptr, new cdk::sequence_node(LINE)); }
-          | tREAD                 { $$ = new til::read_node(LINE); }
-          | tOBJECTS expr         { $$ = new til::objects_node(LINE, $2); }
-          | tSIZEOF expr          { $$ = new til::sizeof_node(LINE, $2); }
-          // | '(' expr ')'          { $$ = $2; } shitft/reduce conflict. I dont even know if this is supposed to exist. this enables things like (+ (1) 2)
+expr_comp : '-' expr                   { $$ = new cdk::unary_minus_node(LINE, $2); }
+          | '+' expr                   { $$ = new cdk::unary_plus_node(LINE, $2); }
+          | '?' lval                   { $$ = new til::address_node(LINE, $2); }
+          | '*' expr expr              { $$ = new cdk::mul_node(LINE, $2, $3); }
+          | '/' expr expr              { $$ = new cdk::div_node(LINE, $2, $3); }
+          | '%' expr expr              { $$ = new cdk::mod_node(LINE, $2, $3); }
+          | '+' expr expr              { $$ = new cdk::add_node(LINE, $2, $3); }
+          | '-' expr expr              { $$ = new cdk::sub_node(LINE, $2, $3); }
+          | '<' expr expr              { $$ = new cdk::lt_node(LINE, $2, $3); }
+          | '>' expr expr              { $$ = new cdk::gt_node(LINE, $2, $3); }
+          | tGE expr expr              { $$ = new cdk::ge_node(LINE, $2, $3); }
+          | tLE expr expr              { $$ = new cdk::le_node(LINE, $2, $3); }
+          | tEQ expr expr              { $$ = new cdk::eq_node(LINE, $2, $3); }
+          | tNE expr expr              { $$ = new cdk::ne_node(LINE, $2, $3); }
+          | '~' expr                   { $$ = new cdk::not_node(LINE, $2); }
+          | tAND expr expr             { $$ = new cdk::and_node(LINE, $2, $3); }
+          | tOR expr expr              { $$ = new cdk::or_node(LINE, $2, $3); }
+          | tSET lval expr             { $$ = new cdk::assignment_node(LINE, $2, $3); }
+          | tWITH expr expr exprs expr { $$ = new til::with_node(LINE, $2, $3, $5, $4); }
+          | tWITH '@' expr exprs expr  { $$ = new til::with_node(LINE, nullptr, $3, $5, $4); }
+          | expr exprs                 { $$ = new til::call_node(LINE, $1, $2); }
+          | expr                       { $$ = new til::call_node(LINE, $1, new cdk::sequence_node(LINE)); }
+          | '@' exprs                  { $$ = new til::call_node(LINE, nullptr, $2); }
+          | '@'                        { $$ = new til::call_node(LINE, nullptr, new cdk::sequence_node(LINE)); }
+          | tREAD                      { $$ = new til::read_node(LINE); }
+          | tOBJECTS expr              { $$ = new til::objects_node(LINE, $2); }
+          | tSIZEOF expr               { $$ = new til::sizeof_node(LINE, $2); }
+          //| '(' expr ')'               { $$ = $2; } shitft/reduce conflict. I dont even know if this is supposed to exist. this enables things like (+ (1) 2)
           ;
 
 lval : tIDENTIFIER                 { $$ = new cdk::variable_node(LINE, *$1); delete $1; }
