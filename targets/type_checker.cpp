@@ -544,57 +544,47 @@ void til::type_checker::do_with_node(til::with_node *const node, int lvl) {
     function_type = cdk::functional_type::cast(symbol->type());
   }
 
-  // check high/low
+  // check high, low and vec
   node->low()->accept(this, lvl);
   node->high()->accept(this, lvl);
+  node->vec()->accept(this, lvl);
 
-  if (!node->low()->is_typed(cdk::TYPE_INTEGER))
+  if (!node->low()->is_typed(cdk::TYPE_INT))
     throw std::string("low is not an integer");
 
-  if (!node->high()->is_typed(cdk::TYPE_INTEGER))
+  if (!node->high()->is_typed(cdk::TYPE_INT))
     throw std::string("high is not an integer");
 
-  int low = node->low()->value();
-  int high = node->high()->value();
+  if (!node->vec()->is_typed(cdk::TYPE_POINTER))
+    throw std::string("vec is not a pointer");
 
-  if (low < 0)
-    throw std::string("low outside bounds");
+  if (function_type->input()->size() != 1)
+    throw std::string("function must only take 1 arg");
 
-  if (high >= node->vec()->size())
-    throw std::string("high outside bounds");
+  auto farg = function_type->input(0);
+  auto narg = node->vec();
 
-  if (low > high)
-    throw std::string("low greater than high");
+  narg->accept(this, lvl);
 
-  if (node->vec()->size() != 1)
-    throw std::string("wrong number of arguments");
-
-  auto farg = ftype->input(0);
-  for (size_t i = 0; i < node->vec()->size(); i++) {
-    auto narg = dynamic_cast<cdk::expression_node *>(node->args()->node(i));
-
-    narg->accept(this, lvl);
-
-    if (narg->is_typed(cdk::TYPE_UNSPEC)) {
-      narg->type(ftype->name() == cdk::TYPE_DOUBLE
-                     ? cdk::primitive_type::create(8, cdk::TYPE_DOUBLE)
-                     : cdk::primitive_type::create(4, cdk::TYPE_INT));
-    }
-
-    if (narg->is_typed(cdk::TYPE_POINTER) && farg->name() == cdk::TYPE_POINTER) {
-      auto narg_ref_type = cdk::reference_type::cast(narg->type())->referenced()->name();
-      auto farg_ref_type = cdk::reference_type::cast(farg)->referenced()->name();
-
-      if (farg_ref_type == cdk::TYPE_VOID || narg_ref_type == cdk::TYPE_UNSPEC ||
-          narg_ref_type == cdk::TYPE_VOID)
-        narg->type(farg);
-    }
-
-    if (!equal_types(farg, narg->type()))
-      throw std::string("bad arg type in function call");
+  if (narg->is_typed(cdk::TYPE_UNSPEC)) {
+    narg->type(function_type->name() == cdk::TYPE_DOUBLE
+                   ? cdk::primitive_type::create(8, cdk::TYPE_DOUBLE)
+                   : cdk::primitive_type::create(4, cdk::TYPE_INT));
   }
 
-  node->type(ftype->output(0));
+  if (narg->is_typed(cdk::TYPE_POINTER) && farg->name() == cdk::TYPE_POINTER) {
+    auto narg_ref_type = cdk::reference_type::cast(narg->type())->referenced()->name();
+    auto farg_ref_type = cdk::reference_type::cast(farg)->referenced()->name();
+
+    if (farg_ref_type == cdk::TYPE_VOID || narg_ref_type == cdk::TYPE_UNSPEC ||
+        narg_ref_type == cdk::TYPE_VOID)
+      narg->type(farg);
+  }
+
+  if (!equal_types(farg, narg->type()))
+    throw std::string("bad arg type in function call");
+
+  node->type(function_type->output(0));
 }
 
 //---------------------------------------------------------------------------

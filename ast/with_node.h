@@ -13,10 +13,10 @@ namespace til {
     cdk::expression_node *_function;
     cdk::expression_node *_low;
     cdk::expression_node *_high;
-    cdk::sequence_node *_vec;
+    cdk::expression_node *_vec;
 
   public:
-    call_node(int lineno, cdk::expression_node *function, cdk::expression_node *low, cdk::expression_node *high, cdk::sequence_node *vec) :
+    with_node(int lineno, cdk::expression_node *function, cdk::expression_node *low, cdk::expression_node *high, cdk::expression_node *vec) :
       cdk::expression_node(lineno), _function(function), _low(low), _high(high), _vec(vec) {}
 
     cdk::expression_node *function() { return _function; }
@@ -25,7 +25,7 @@ namespace til {
 
     cdk::expression_node *high() { return _high; }
 
-    cdk::sequence_node *vec() { return _vec; }
+    cdk::expression_node *vec() { return _vec; }
 
     void accept(basic_ast_visitor *sp, int level) {
       sp->do_with_node(this, level);

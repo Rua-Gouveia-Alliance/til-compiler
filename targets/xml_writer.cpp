@@ -281,6 +281,10 @@ void til::xml_writer::do_call_node(til::call_node * const node, int lvl) {
   closeTag(node, lvl);
 }
 
+void til::xml_writer::do_with_node(til::with_node * const node, int lvl) {
+  // EMPTY
+}
+
 //---------------------------------------------------------------------------
 
 void til::xml_writer::do_stop_node(til::stop_node * const node, int lvl) {

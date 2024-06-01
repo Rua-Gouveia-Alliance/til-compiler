@@ -661,41 +661,66 @@ void til::postfix_writer::do_with_node(til::with_node *const node, int lvl) {
     type = cdk::functional_type::cast(node->function()->type());
   }
 
-  node->low()->accept(this, lvl + 2);
-  node->high()->accept(this, lvl + 2);
+  std::string lbl = mklbl(_lbl++);
+  std::string i = "_with_node_i_" + lbl;
+  std::string endfor = "_with_node_endfor_" + lbl;
+  std::string condition = "_with_node_condition_" + lbl;
+  std::string increment = "_with_node_increment_" + lbl;
 
-  int low = node->low()->value();
-  int high = node->high()->value();
+  _pf.DATA();
+  _pf.LABEL(i);
 
-  for (size_t i = low; i < high; i++) {
-    auto argument = dynamic_cast<cdk::expression_node *>(node->args()->node(i));
-    int trash_size = argument->type()->size(); // Need to delete args from stack after call
-    fixFunctionTypes(argument, type->input(0), lvl + 2); // Pushing to stack and fixing types
-
-    _externalCall = "";
-
-    if (node->function() == nullptr) // Recursive call
-        _pf.ADDR(_functionLabels.back());
-    else // Normal call
-        node->function()->accept(this, lvl);
-
-    if (_externalCall != "")
-        _pf.CALL(_externalCall);
-    else
-        _pf.BRANCH();
-
-    _externalCall = "";
-
-    _pf.TRASH(trash_size);
-
-    // Only load if return is not void
-    if (!node->is_typed(cdk::TYPE_VOID)) {
-        if (node->is_typed(cdk::TYPE_DOUBLE))
-            _pf.LDFVAL64();
-        else
-            _pf.LDFVAL32();
-    }
+  if (_functionLabels.size() != 0) {
+    _pf.TEXT(_functionLabels.back());
+  } else {
+    _pf.TEXT("_with_node_");
   }
+  node->low()->accept(this, lvl);
+  _pf.LABEL(i);
+  _pf.STINT();
+  _pf.LABEL(condition);
+  _pf.LABEL(i);
+  _pf.LDINT();
+  node->high()->accept(this, lvl);
+  _pf.LT();
+  _pf.JZ(endfor);
+
+  node->vec()->accept(this, lvl);
+  _pf.LABEL(i);
+  _pf.LDINT();
+  _pf.INT(node->vec()->type()->size());
+  _pf.MUL();
+  _pf.ADD();
+  if (node->vec()->is_typed(cdk::TYPE_DOUBLE))
+    _pf.LDDOUBLE();
+  else
+    _pf.LDINT();
+
+  _externalCall = "";
+
+  if (node->function() == nullptr) // Recursive call
+      _pf.ADDR(_functionLabels.back());
+  else // Normal call
+      node->function()->accept(this, lvl);
+
+  if (_externalCall != "")
+      _pf.CALL(_externalCall);
+  else
+      _pf.BRANCH();
+
+  _externalCall = "";
+
+  _pf.TRASH(node->vec()->type()->size());
+
+  _pf.LABEL(increment);
+  _pf.LABEL(i);
+  _pf.LDINT();
+  _pf.INT(1);
+  _pf.ADD();
+  _pf.LABEL(i);
+  _pf.STINT();
+  _pf.JMP(condition);
+  _pf.LABEL(endfor);
 }
 
 
