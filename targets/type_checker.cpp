@@ -9,6 +9,7 @@
 #include <cdk/types/reference_type.h>
 #include <cdk/types/typename_type.h>
 #include <string>
+#include <iostream>
 
 #define ASSERT_UNSPEC                                                                              \
   {                                                                                                \
@@ -558,7 +559,7 @@ void til::type_checker::do_with_node(til::with_node *const node, int lvl) {
   if (!node->vec()->is_typed(cdk::TYPE_POINTER))
     throw std::string("vec is not a pointer");
 
-  if (function_type->input()->size() != 1)
+  if (function_type->input()->length() != 1)
     throw std::string("function must only take 1 arg");
 
   auto farg = function_type->input(0);
@@ -581,7 +582,8 @@ void til::type_checker::do_with_node(til::with_node *const node, int lvl) {
       narg->type(farg);
   }
 
-  if (!equal_types(farg, narg->type()))
+  auto narg_ref_type = cdk::reference_type::cast(narg->type())->referenced();
+  if (!equal_types(farg, narg_ref_type))
     throw std::string("bad arg type in function call");
 
   node->type(function_type->output(0));

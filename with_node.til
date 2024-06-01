@@ -1,0 +1,5 @@
+(program
+    (var f (function (void (int i)) (println i)))
+    (int! i (objects 5))
+    (with f 1 4 i)
+)

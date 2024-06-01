@@ -676,17 +676,17 @@ void til::postfix_writer::do_with_node(til::with_node *const node, int lvl) {
     _pf.TEXT("_with_node_");
   }
   node->low()->accept(this, lvl);
-  _pf.LABEL(i);
+  _pf.ADDR(i);
   _pf.STINT();
   _pf.LABEL(condition);
-  _pf.LABEL(i);
+  _pf.ADDR(i);
   _pf.LDINT();
   node->high()->accept(this, lvl);
   _pf.LT();
   _pf.JZ(endfor);
 
   node->vec()->accept(this, lvl);
-  _pf.LABEL(i);
+  _pf.ADDR(i);
   _pf.LDINT();
   _pf.INT(node->vec()->type()->size());
   _pf.MUL();
@@ -713,11 +713,11 @@ void til::postfix_writer::do_with_node(til::with_node *const node, int lvl) {
   _pf.TRASH(node->vec()->type()->size());
 
   _pf.LABEL(increment);
-  _pf.LABEL(i);
+  _pf.ADDR(i);
   _pf.LDINT();
   _pf.INT(1);
   _pf.ADD();
-  _pf.LABEL(i);
+  _pf.ADDR(i);
   _pf.STINT();
   _pf.JMP(condition);
   _pf.LABEL(endfor);
