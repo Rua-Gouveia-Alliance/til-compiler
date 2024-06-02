@@ -715,14 +715,6 @@ void til::postfix_writer::do_with_node(til::with_node *const node, int lvl) {
 
   // apagar o low
   _pf.TRASH(4);
-
-  // Only load if return is not void
-  if (!node->is_typed(cdk::TYPE_VOID)) {
-    if (node->is_typed(cdk::TYPE_DOUBLE))
-      _pf.LDFVAL64();
-    else
-      _pf.LDFVAL32();
-  }
 }
 
 //---------------------------------------------------------------------------

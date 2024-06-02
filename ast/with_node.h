@@ -8,7 +8,7 @@ namespace til {
 /**
  * Class for describing function with nodes.
  */
-class with_node : public cdk::expression_node {
+class with_node : public cdk::basic_node {
   cdk::expression_node *_function_ptr;
   cdk::expression_node *_vector;
   cdk::expression_node *_low;
@@ -17,7 +17,7 @@ class with_node : public cdk::expression_node {
 public:
   with_node(int lineno, cdk::expression_node *function_ptr, cdk::expression_node *vector,
             cdk::expression_node *low, cdk::expression_node *high)
-      : cdk::expression_node(lineno), _function_ptr(function_ptr), _vector(vector), _low(low),
+      : cdk::basic_node(lineno), _function_ptr(function_ptr), _vector(vector), _low(low),
         _high(high) {}
 
   cdk::expression_node *function_ptr() { return _function_ptr; }

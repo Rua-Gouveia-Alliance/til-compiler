@@ -527,7 +527,6 @@ void til::type_checker::do_call_node(til::call_node *const node, int lvl) {
 //---------------------------------------------------------------------------
 
 void til::type_checker::do_with_node(til::with_node *const node, int lvl) {
-  ASSERT_UNSPEC;
   cdk::expression_node *fptr = node->function_ptr();
   std::shared_ptr<cdk::functional_type> ftype;
 
@@ -554,7 +553,7 @@ void til::type_checker::do_with_node(til::with_node *const node, int lvl) {
   if (node->vector()->is_typed(cdk::TYPE_POINTER)) {
     auto vector_ref_type = cdk::reference_type::cast(node->vector()->type())->referenced();
 
-    if (!equal_types(ftype->input(0), vector_ref_type))
+    if (!equal_types(ftype->input(0), vector_ref_type, true))
       throw std::string("bad vector type in with");
   } else {
     throw std::string("bad vector type in with");
@@ -573,8 +572,6 @@ void til::type_checker::do_with_node(til::with_node *const node, int lvl) {
   } else if (!node->high()->is_typed(cdk::TYPE_INT)) {
     throw std::string("bad high type in with");
   }
-
-  node->type(ftype->output(0));
 }
 
 //---------------------------------------------------------------------------

@@ -47,7 +47,7 @@
 %token tSET tREAD tSIZEOF tINDEX tOBJECTS
 %token tGE tLE tEQ tNE tAND tOR
 
-%type <node> program decl decl_global function_decl inst loop if
+%type <node> program decl decl_global function_decl inst loop with if
 %type <sequence> decls decls_global insts exprs function_decls
 %type <type> type type_pointer type_function function_type
 %type <vtype> types
@@ -152,6 +152,7 @@ inst : expr                           { $$ = new til::evaluation_node(LINE, $1);
      | '(' tRETURN ')'                { $$ = new til::return_node(LINE, nullptr); }
      | if                             { $$ = $1; }
      | loop                           { $$ = $1; }
+     | with                           { $$ = $1; }
      | block                          { $$ = $1; }
      ;
 
@@ -163,6 +164,10 @@ if : '(' tIF expr inst inst ')' { $$ = new til::if_else_node(LINE, $3, $4, $5); 
    ;
 
 loop : '(' tLOOP expr inst ')'  { $$ = new til::loop_node(LINE, $3, $4); }
+     ;
+
+with : tWITH expr expr expr expr  { $$ = new til::with_node(LINE, $2, $3, $4, $5); }
+     | tWITH '@' expr expr expr   { $$ = new til::with_node(LINE, nullptr, $3, $4, $5); }
      ;
 
 expr : tINT                  { $$ = new cdk::integer_node(LINE, $1); }
@@ -196,8 +201,6 @@ expr_comp : '-' expr              { $$ = new cdk::unary_minus_node(LINE, $2); }
           | expr                  { $$ = new til::call_node(LINE, $1, new cdk::sequence_node(LINE)); }
           | '@' exprs             { $$ = new til::call_node(LINE, nullptr, $2); }
           | '@'                   { $$ = new til::call_node(LINE, nullptr, new cdk::sequence_node(LINE)); }
-          | tWITH expr expr expr expr  { $$ = new til::with_node(LINE, $2, $3, $4, $5); }
-          | tWITH '@' expr expr expr   { $$ = new til::with_node(LINE, nullptr, $3, $4, $5); }
           | tREAD                 { $$ = new til::read_node(LINE); }
           | tOBJECTS expr         { $$ = new til::objects_node(LINE, $2); }
           | tSIZEOF expr          { $$ = new til::sizeof_node(LINE, $2); }
