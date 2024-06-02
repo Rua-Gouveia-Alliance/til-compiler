@@ -666,38 +666,26 @@ void til::postfix_writer::do_with_node(til::with_node *const node, int lvl) {
   std::string endfor = "_with_node_endfor_" + lbl;
   std::string condition = "_with_node_condition_" + lbl;
   std::string increment = "_with_node_increment_" + lbl;
+  auto vec_ref_type = cdk::reference_type::cast(node->vec()->type())->referenced();
 
-  _pf.DATA();
-  _pf.LABEL(i);
-
-  if (_functionLabels.size() != 0) {
-    _pf.TEXT(_functionLabels.back());
-  } else {
-    _pf.TEXT("_with_node_");
-  }
   node->low()->accept(this, lvl);
-  _pf.ADDR(i);
-  _pf.STINT();
   _pf.LABEL(condition);
-  _pf.ADDR(i);
-  _pf.LDINT();
+  _pf.DUP32();
   node->high()->accept(this, lvl);
   _pf.LT();
   _pf.JZ(endfor);
 
-  node->vec()->accept(this, lvl);
-  _pf.ADDR(i);
-  _pf.LDINT();
-  _pf.INT(node->vec()->type()->size());
+  _pf.DUP32();
+  _pf.INT(vec_ref_type->size());
   _pf.MUL();
+  node->vec()->accept(this, lvl);
   _pf.ADD();
-  if (node->vec()->is_typed(cdk::TYPE_DOUBLE))
+  if (vec_ref_type->name() == cdk::TYPE_DOUBLE)
     _pf.LDDOUBLE();
   else
     _pf.LDINT();
 
   _externalCall = "";
-
   if (node->function() == nullptr) // Recursive call
       _pf.ADDR(_functionLabels.back());
   else // Normal call
@@ -710,19 +698,15 @@ void til::postfix_writer::do_with_node(til::with_node *const node, int lvl) {
 
   _externalCall = "";
 
-  _pf.TRASH(node->vec()->type()->size());
+  _pf.TRASH(vec_ref_type->size());
 
   _pf.LABEL(increment);
-  _pf.ADDR(i);
-  _pf.LDINT();
   _pf.INT(1);
   _pf.ADD();
-  _pf.ADDR(i);
-  _pf.STINT();
   _pf.JMP(condition);
   _pf.LABEL(endfor);
+  _pf.TRASH(node->low()->size());
 }
-
 
 //---------------------------------------------------------------------------
 

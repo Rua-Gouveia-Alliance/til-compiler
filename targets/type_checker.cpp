@@ -545,46 +545,32 @@ void til::type_checker::do_with_node(til::with_node *const node, int lvl) {
     function_type = cdk::functional_type::cast(symbol->type());
   }
 
-  // check high, low and vec
-  node->low()->accept(this, lvl);
-  node->high()->accept(this, lvl);
-  node->vec()->accept(this, lvl);
-
-  if (!node->low()->is_typed(cdk::TYPE_INT))
-    throw std::string("low is not an integer");
-
-  if (!node->high()->is_typed(cdk::TYPE_INT))
-    throw std::string("high is not an integer");
-
-  if (!node->vec()->is_typed(cdk::TYPE_POINTER))
-    throw std::string("vec is not a pointer");
-
   if (function_type->input()->length() != 1)
     throw std::string("function must only take 1 arg");
 
-  auto farg = function_type->input(0);
-  auto narg = node->vec();
-
-  narg->accept(this, lvl);
-
-  if (narg->is_typed(cdk::TYPE_UNSPEC)) {
-    narg->type(function_type->name() == cdk::TYPE_DOUBLE
-                   ? cdk::primitive_type::create(8, cdk::TYPE_DOUBLE)
-                   : cdk::primitive_type::create(4, cdk::TYPE_INT));
+  // check high, low and vec
+  node->low()->accept(this, lvl);
+  if (node->low()->is_typed(cdk::TYPE_UNSPEC)) {
+    node->low()->type(cdk::primitive_type::create(4, cdk::TYPE_INT));
+  } else if (!node->low()->is_typed(cdk::TYPE_INT)) {
+    throw std::string("low is not an integer");
   }
 
-  if (narg->is_typed(cdk::TYPE_POINTER) && farg->name() == cdk::TYPE_POINTER) {
-    auto narg_ref_type = cdk::reference_type::cast(narg->type())->referenced()->name();
-    auto farg_ref_type = cdk::reference_type::cast(farg)->referenced()->name();
-
-    if (farg_ref_type == cdk::TYPE_VOID || narg_ref_type == cdk::TYPE_UNSPEC ||
-        narg_ref_type == cdk::TYPE_VOID)
-      narg->type(farg);
+  node->high()->accept(this, lvl);
+  if (node->high()->is_typed(cdk::TYPE_UNSPEC)) {
+    node->high()->type(cdk::primitive_type::create(4, cdk::TYPE_INT));
+  } else if (!node->high()->is_typed(cdk::TYPE_INT)) {
+    throw std::string("high is not an integer");
   }
 
-  auto narg_ref_type = cdk::reference_type::cast(narg->type())->referenced();
-  if (!equal_types(farg, narg_ref_type))
-    throw std::string("bad arg type in function call");
+  node->vec()->accept(this, lvl);
+  if (!node->vec()->is_typed(cdk::TYPE_POINTER)) {
+    throw std::string("vec is not a pointer");
+  }
+
+  auto vec_ref_type = cdk::reference_type::cast(node->vec()->type())->referenced();
+  if (!equal_types(function_type->input(0), vec_ref_type))
+      throw std::string("bad arg type in function call");
 
   node->type(function_type->output(0));
 }
