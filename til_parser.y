@@ -166,8 +166,8 @@ if : '(' tIF expr inst inst ')' { $$ = new til::if_else_node(LINE, $3, $4, $5); 
 loop : '(' tLOOP expr inst ')'  { $$ = new til::loop_node(LINE, $3, $4); }
      ;
 
-with : tWITH expr expr expr expr  { $$ = new til::with_node(LINE, $2, $3, $4, $5); }
-     | tWITH '@' expr expr expr   { $$ = new til::with_node(LINE, nullptr, $3, $4, $5); }
+with : '(' tWITH expr expr expr expr ')' { $$ = new til::with_node(LINE, $3, $4, $5, $6); }
+     | '(' tWITH '@' expr expr expr ')'  { $$ = new til::with_node(LINE, nullptr, $4, $5, $6); }
      ;
 
 expr : tINT                  { $$ = new cdk::integer_node(LINE, $1); }
