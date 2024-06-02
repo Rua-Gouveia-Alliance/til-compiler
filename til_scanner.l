@@ -36,6 +36,7 @@ EXP [Ee][+-]?[0-9]+
 "program"                return tPROGRAM;
 "block"                  return tBLOCK;
 "function"               return tFUNCTION;
+"with"                   return tWITH;
 
 "public"                 return tPUBLIC;
 "forward"                return tFORWARD;

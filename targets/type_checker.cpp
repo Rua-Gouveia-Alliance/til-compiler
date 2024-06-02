@@ -526,6 +526,58 @@ void til::type_checker::do_call_node(til::call_node *const node, int lvl) {
 
 //---------------------------------------------------------------------------
 
+void til::type_checker::do_with_node(til::with_node *const node, int lvl) {
+  ASSERT_UNSPEC;
+  cdk::expression_node *fptr = node->function_ptr();
+  std::shared_ptr<cdk::functional_type> ftype;
+
+  if (fptr != nullptr) {
+    fptr->accept(this, lvl);
+    if (!fptr->is_typed(cdk::TYPE_FUNCTIONAL))
+      throw std::string("call of non-function");
+
+    ftype = cdk::functional_type::cast(fptr->type());
+  } else {
+    // call of current function
+    auto symbol = _symtab.find("@", 1);
+    if (symbol == nullptr)
+      throw std::string("recursive invocation outside a function");
+
+    ftype = cdk::functional_type::cast(symbol->type());
+  }
+
+  // check number of arguments
+  if (ftype->input()->length() != 1)
+    throw std::string("wrong number of arguments");
+
+  node->vector()->accept(this, lvl);
+  if (node->vector()->is_typed(cdk::TYPE_POINTER)) {
+    auto vector_ref_type = cdk::reference_type::cast(node->vector()->type())->referenced();
+
+    if (!equal_types(ftype->input(0), vector_ref_type))
+      throw std::string("bad vector type in with");
+  } else {
+    throw std::string("bad vector type in with");
+  }
+
+  node->low()->accept(this, lvl);
+  if (node->low()->is_typed(cdk::TYPE_UNSPEC)) {
+    node->low()->type(cdk::primitive_type::create(4, cdk::TYPE_INT));
+  } else if (!node->low()->is_typed(cdk::TYPE_INT)) {
+    throw std::string("bad low type in with");
+  }
+
+  node->high()->accept(this, lvl);
+  if (node->high()->is_typed(cdk::TYPE_UNSPEC)) {
+    node->high()->type(cdk::primitive_type::create(4, cdk::TYPE_INT));
+  } else if (!node->high()->is_typed(cdk::TYPE_INT)) {
+    throw std::string("bad high type in with");
+  }
+
+  node->type(ftype->output(0));
+}
+
+//---------------------------------------------------------------------------
 void til::type_checker::do_return_node(til::return_node *const node, int lvl) {
   auto symbol = _symtab.find("@", 1);
   if (symbol == nullptr)

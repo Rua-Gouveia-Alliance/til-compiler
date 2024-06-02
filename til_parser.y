@@ -40,7 +40,7 @@
 %token <s> tIDENTIFIER tSTRING
 %token tNULL
 %token tTINT tTDOUBLE tTSTRING tTVOID
-%token tPROGRAM tBLOCK tFUNCTION
+%token tPROGRAM tBLOCK tFUNCTION tWITH
 %token tPUBLIC tPRIVATE tFORWARD tEXTERNAL tVAR
 %token tPRINT tPRINTLN tSTOP tNEXT tRETURN
 %token tIF tLOOP
@@ -196,6 +196,8 @@ expr_comp : '-' expr              { $$ = new cdk::unary_minus_node(LINE, $2); }
           | expr                  { $$ = new til::call_node(LINE, $1, new cdk::sequence_node(LINE)); }
           | '@' exprs             { $$ = new til::call_node(LINE, nullptr, $2); }
           | '@'                   { $$ = new til::call_node(LINE, nullptr, new cdk::sequence_node(LINE)); }
+          | tWITH expr expr expr expr  { $$ = new til::with_node(LINE, $2, $3, $4, $5); }
+          | tWITH '@' expr expr expr   { $$ = new til::with_node(LINE, nullptr, $3, $4, $5); }
           | tREAD                 { $$ = new til::read_node(LINE); }
           | tOBJECTS expr         { $$ = new til::objects_node(LINE, $2); }
           | tSIZEOF expr          { $$ = new til::sizeof_node(LINE, $2); }
