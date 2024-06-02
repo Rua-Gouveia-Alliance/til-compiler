@@ -178,6 +178,24 @@ void til::xml_writer::do_loop_node(til::loop_node * const node, int lvl) {
   closeTag(node, lvl);
 }
 
+void til::xml_writer::do_for_node(til::for_node * const node, int lvl) {
+  // ASSERT_SAFE_EXPRESSIONS;
+  openTag(node, lvl);
+  openTag("assignment", lvl + 2);
+  node->assignment()->accept(this, lvl + 4);
+  closeTag("assignment", lvl + 2);
+  openTag("condition", lvl + 2);
+  node->condition()->accept(this, lvl + 4);
+  closeTag("condition", lvl + 2);
+  openTag("increment", lvl + 2);
+  node->increment()->accept(this, lvl + 4);
+  closeTag("increment", lvl + 2);
+  openTag("block", lvl + 2);
+  node->block()->accept(this, lvl + 4);
+  closeTag("block", lvl + 2);
+  closeTag(node, lvl);
+}
+
 //---------------------------------------------------------------------------
 
 void til::xml_writer::do_if_node(til::if_node * const node, int lvl) {

@@ -129,6 +129,10 @@ void til::frame_size_calculator::do_loop_node(til::loop_node * const node, int l
   node->block()->accept(this, lvl);
 }
 
+void til::frame_size_calculator::do_for_node(til::for_node * const node, int lvl) {
+  node->block()->accept(this, lvl);
+}
+
 //---------------------------------------------------------------------------
 
 void til::frame_size_calculator::do_if_node(til::if_node * const node, int lvl) {

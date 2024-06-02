@@ -504,6 +504,36 @@ void til::postfix_writer::do_loop_node(til::loop_node *const node, int lvl) {
   _pf.LABEL(mklbl(lbl2));
 }
 
+void til::postfix_writer::do_for_node(til::for_node *const node, int lvl) {
+  ASSERT_SAFE_EXPRESSIONS;
+
+  std::string condition = mklbl(++_lbl);
+  std::string increment = mklbl(++_lbl);
+  std::string endfor = mklbl(++_lbl);
+
+  node->assignment()->accept(this, lvl);
+
+  _pf.ALIGN();
+  _pf.LABEL(condition);
+
+  node->condition()->accept(this, lvl);
+
+  _pf.JZ(endfor);
+
+  _loopLabels->push_back(std::make_pair(condition, endfor));
+  node->block()->accept(this, lvl + 2);
+  _loopLabels->pop_back();
+
+  _pf.ALIGN();
+  _pf.LABEL(increment);
+
+  node->increment()->accept(this, lvl);
+
+  _pf.JMP(condition);
+  _pf.ALIGN();
+  _pf.LABEL(endfor);
+}
+
 void til::postfix_writer::do_if_node(til::if_node *const node, int lvl) {
   ASSERT_SAFE_EXPRESSIONS;
 

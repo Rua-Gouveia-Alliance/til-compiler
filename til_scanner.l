@@ -50,6 +50,7 @@ EXP [Ee][+-]?[0-9]+
 
 "if"                     return tIF;
 "loop"                   return tLOOP;
+"for"                    return tFOR;
 
 "set"                    return tSET;
 "read"                   return tREAD;

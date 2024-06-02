@@ -395,6 +395,16 @@ void til::type_checker::do_loop_node(til::loop_node *const node, int lvl) {
     throw std::string("invalid type for loop condition");
 }
 
+void til::type_checker::do_for_node(til::for_node *const node, int lvl) {
+  cdk::expression_node *cond = node->condition();
+  cond->accept(this, lvl + 4);
+
+  if (cond->is_typed(cdk::TYPE_UNSPEC))
+    cond->type(cdk::primitive_type::create(4, cdk::TYPE_INT));
+  else if (!cond->is_typed(cdk::TYPE_INT))
+    throw std::string("invalid type for for-loop condition");
+}
+
 void til::type_checker::do_if_node(til::if_node *const node, int lvl) {
   cdk::expression_node *cond = node->condition();
   cond->accept(this, lvl + 4);
