@@ -399,6 +399,9 @@ void til::type_checker::do_for_node(til::for_node *const node, int lvl) {
   cdk::expression_node *cond = node->condition();
   cond->accept(this, lvl + 4);
 
+  node->assignment()->accept(this, lvl + 4);
+  node->increment()->accept(this, lvl + 4);
+
   if (cond->is_typed(cdk::TYPE_UNSPEC))
     cond->type(cdk::primitive_type::create(4, cdk::TYPE_INT));
   else if (!cond->is_typed(cdk::TYPE_INT))

@@ -520,7 +520,7 @@ void til::postfix_writer::do_for_node(til::for_node *const node, int lvl) {
 
   _pf.JZ(endfor);
 
-  _loopLabels->push_back(std::make_pair(condition, endfor));
+  _loopLabels->push_back(std::make_pair(increment, endfor));
   node->block()->accept(this, lvl + 2);
   _loopLabels->pop_back();
 
