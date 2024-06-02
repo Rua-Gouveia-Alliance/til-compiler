@@ -705,7 +705,7 @@ void til::postfix_writer::do_with_node(til::with_node *const node, int lvl) {
   _pf.ADD();
   _pf.JMP(condition);
   _pf.LABEL(endfor);
-  _pf.TRASH(node->low()->size());
+  _pf.TRASH(node->low()->type()->size());
 }
 
 //---------------------------------------------------------------------------
